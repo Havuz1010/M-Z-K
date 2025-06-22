@@ -150,10 +150,10 @@
       white-space: nowrap; /* Saati tek satırda tut */
     }
 
-    .seek-buttons {
+    .seek-buttons { /* Adı değiştirmedim, ama artık ileri/geri sarma değil */
       display: flex;
       justify-content: center;
-      gap: 15px; /* İleri/geri butonları arası boşluk */
+      gap: 15px; /* Butonlar arası boşluk */
       width: 100%;
     }
 
@@ -211,8 +211,8 @@
         </div>
 
         <div class="seek-buttons">
-          <button id="rewindButton"><i class="fas fa-backward"></i> Geri (10s)</button>
-          <button id="forwardButton"><i class="fas fa-forward"></i> İleri (10s)</button>
+          <button id="prevButton"><i class="fas fa-step-backward"></i> Önceki</button>
+          <button id="nextButton"><i class="fas fa-step-forward"></i> Sonraki</button>
         </div>
       </div>
       </div>
@@ -271,14 +271,44 @@
   const progressBar = document.getElementById('progressBar');
   const currentTimeDisplay = document.getElementById('currentTimeDisplay');
   const durationDisplay = document.getElementById('durationDisplay');
-  const rewindButton = document.getElementById('rewindButton');
-  const forwardButton = document.getElementById('forwardButton');
-  const seekTime = 10; // İleri/geri sarma süresi (saniye)
+  // Önceki ve Sonraki butonları
+  const prevButton = document.getElementById('prevButton');
+  const nextButton = document.getElementById('nextButton');
+
+  let currentMusicIndex = -1; // Mevcut çalınan şarkının indeksi
+  let allMusic = []; // Firebase'den gelen tüm şarkıları tutacak dizi
+
+  // Şarkı çalma fonksiyonu
+  function playMusic(index) {
+    if (index >= 0 && index < allMusic.length) {
+      currentMusicIndex = index;
+      const music = allMusic[currentMusicIndex];
+      player.src = music.url;
+      player.load(); // Yeni kaynak yüklendiğinde metadatayı yüklemesi için
+      player.play();
+      playPauseButton.innerHTML = '<i class="fas fa-pause"></i>';
+      nowPlaying.textContent = "🎶 Çalıyor: " + music.title;
+
+      // Aktif şarkı butonunu güncelle
+      document.querySelectorAll(".music-button").forEach((btn, i) => {
+        if (i === currentMusicIndex) {
+          btn.classList.add("active");
+        } else {
+          btn.classList.remove("active");
+        }
+      });
+    }
+  }
 
   // Oynat/Duraklat Butonu
   playPauseButton.addEventListener('click', () => {
     if (player.paused) {
-      player.play();
+      if (currentMusicIndex === -1 && allMusic.length > 0) {
+        // Eğer hiç şarkı seçilmediyse ilk şarkıyı çal
+        playMusic(0);
+      } else {
+        player.play();
+      }
       playPauseButton.innerHTML = '<i class="fas fa-pause"></i>';
     } else {
       player.pause();
@@ -288,9 +318,11 @@
 
   // İlerleme Çubuğu Güncellemesi (Şarkı çalarken)
   player.addEventListener('timeupdate', () => {
-    const progress = (player.currentTime / player.duration) * 100;
-    progressBar.value = progress;
-    currentTimeDisplay.textContent = formatTime(player.currentTime);
+    if (!isNaN(player.duration)) { // Süre geçerliyse
+      const progress = (player.currentTime / player.duration) * 100;
+      progressBar.value = progress;
+      currentTimeDisplay.textContent = formatTime(player.currentTime);
+    }
   });
 
   // Şarkı yüklendiğinde toplam süreyi göster
@@ -299,33 +331,43 @@
     progressBar.max = 100; // İlerleme çubuğunun max değerini 100 olarak ayarla
   });
 
-  // Şarkı bittiğinde play ikonuna geri dön
+  // Şarkı bittiğinde sonraki şarkıya geç veya play ikonuna geri dön
   player.addEventListener('ended', () => {
-    playPauseButton.innerHTML = '<i class="fas fa-play"></i>';
-    progressBar.value = 0;
-    currentTimeDisplay.textContent = '0:00';
+    if (currentMusicIndex < allMusic.length - 1) {
+      playMusic(currentMusicIndex + 1); // Sonraki şarkıya geç
+    } else {
+      playPauseButton.innerHTML = '<i class="fas fa-play"></i>';
+      progressBar.value = 0;
+      currentTimeDisplay.textContent = '0:00';
+      currentMusicIndex = -1; // Şarkı bitince indeksi sıfırla
+    }
   });
 
   // İlerleme çubuğu sürüklenince şarkıyı sar
   progressBar.addEventListener('input', () => {
-    const seekTo = (progressBar.value / 100) * player.duration;
-    player.currentTime = seekTo;
-  });
-
-  // İleri/Geri Sarma Butonları
-  rewindButton.addEventListener('click', () => {
-    if (player.currentTime > seekTime) {
-      player.currentTime -= seekTime;
-    } else {
-      player.currentTime = 0;
+    if (!isNaN(player.duration)) {
+      const seekTo = (progressBar.value / 100) * player.duration;
+      player.currentTime = seekTo;
     }
   });
 
-  forwardButton.addEventListener('click', () => {
-    if (player.currentTime < player.duration - seekTime) {
-      player.currentTime += seekTime;
-    } else {
-      player.currentTime = player.duration;
+  // Önceki Şarkı Butonu
+  prevButton.addEventListener('click', () => {
+    if (currentMusicIndex > 0) {
+      playMusic(currentMusicIndex - 1);
+    } else if (allMusic.length > 0) {
+      // İlk şarkıdaysa son şarkıya dön (isteğe bağlı)
+      playMusic(allMusic.length - 1);
+    }
+  });
+
+  // Sonraki Şarkı Butonu
+  nextButton.addEventListener('click', () => {
+    if (currentMusicIndex < allMusic.length - 1) {
+      playMusic(currentMusicIndex + 1);
+    } else if (allMusic.length > 0) {
+      // Son şarkıdaysa ilk şarkıya dön (isteğe bağlı)
+      playMusic(0);
     }
   });
 
@@ -338,20 +380,21 @@
 
   async function loadMusic() {
     musicListDiv.innerHTML = ''; // Mevcutları temizle
-    const query = await getDocs(collection(db, "music"));
-    query.forEach(doc => {
-      const data = doc.data();
+    allMusic = []; // Her yüklemede diziyi sıfırla
+    const querySnapshot = await getDocs(collection(db, "music"));
+    querySnapshot.forEach(doc => {
+      allMusic.push({ id: doc.id, ...doc.data() });
+    });
+
+    // Şarkıları başlığa göre sırala (isteğe bağlı, tutarlı bir sıra için)
+    allMusic.sort((a, b) => a.title.localeCompare(b.title));
+
+    allMusic.forEach((music, index) => {
       const btn = document.createElement("button");
       btn.className = "music-button";
-      btn.innerText = data.title;
+      btn.innerText = music.title;
       btn.onclick = () => {
-        document.querySelectorAll(".music-button").forEach(b => b.classList.remove("active"));
-        btn.classList.add("active");
-        player.src = data.url;
-        player.load(); // Yeni kaynak yüklendiğinde metadatayı yüklemesi için
-        player.play();
-        playPauseButton.innerHTML = '<i class="fas fa-pause"></i>'; // Oynatıldıktan sonra duraklat ikonu
-        nowPlaying.textContent = "🎶 Çalıyor: " + data.title;
+        playMusic(index); // Butona tıklanınca ilgili indeksteki şarkıyı çal
       };
       musicListDiv.appendChild(btn);
     });
