@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Beşiktaş Müzik</title>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+    import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyD-sWB0nG4eAW2BndW8AvG6OVZFP_LjpQk",
+      authDomain: "admin-5ae49.firebaseapp.com",
+      projectId: "admin-5ae49",
+      storageBucket: "admin-5ae49.firebasestorage.app",
+      messagingSenderId: "220113764380",
+      appId: "1:220113764380:web:2f00c76595a48bf7721fd9",
+      measurementId: "G-Q4VC148L3R"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const musicList = document.getElementById("musicList");
+    const player = document.getElementById("audioPlayer");
+
+    function renderMusic(snapshot) {
+      musicList.innerHTML = "";
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const div = document.createElement("div");
+        div.className = "track";
+        div.innerText = data.title;
+        div.onclick = () => {
+          document.querySelectorAll(".track").forEach(el => el.classList.remove("active"));
+          div.classList.add("active");
+          player.src = data.url;
+          player.play();
+        };
+        musicList.appendChild(div);
+      });
+    }
+
+    onSnapshot(collection(db, "music"), (snapshot) => {
+      renderMusic(snapshot);
+    });
+  </script>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: #000;
+      color: white;
+      height: 100%;
+    }
+    .screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+    }
+    h2 { margin-bottom: 20px; }
+    .music-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 16px;
+      width: 100%;
+      max-width: 800px;
+    }
+    .track {
+      background: #111;
+      padding: 16px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: 0.3s;
+      text-align: center;
+    }
+    .track:hover { background: #222; }
+    .track.active {
+      background: #0f0;
+      color: #000;
+      font-weight: bold;
+    }
+    audio {
+      margin-top: 30px;
+      width: 90%;
+      max-width: 600px;
+    }
+  </style>
+</head>
+<body>
+  <div class="screen">
+    <h2>🎧 Beşiktaş Müzik Listesi</h2>
+    <div class="music-list" id="musicList"></div>
+    <audio id="audioPlayer" controls></audio>
+  </div>
+</body>
+</html>
