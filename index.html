@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Beşiktaş Müzik</title>
-  <style>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" /> <style>
     * { box-sizing: border-box; }
     body, html {
       margin: 0;
@@ -87,27 +87,55 @@
     }
     audio {
       width: 100%;
-      margin-top: 15px; /* Butonlardan sonra biraz boşluk bırakır */
+      margin-top: 10px; /* Özel butonlar için boşluk */
       border-radius: 8px;
       background-color: #222;
       padding: 5px;
     }
 
-    /* Tarayıcıya özel stiller (opsiyonel) */
-    audio::-webkit-media-controls-panel {
-      background-color: #333;
-      color: white;
-    }
-    audio::-webkit-media-controls-play-button,
-    audio::-webkit-media-controls-pause-button,
-    audio::-webkit-media-controls-current-time-display,
-    audio::-webkit-media-controls-time-remaining-display,
-    audio::-webkit-media-controls-timeline,
-    audio::-webkit-media-controls-volume-slider,
-    audio::-webkit-media-controls-mute-button {
-      color: white;
+    /* Özel İleri/Geri Sarma Butonları Stilleri */
+    .audio-controls {
+      display: flex;
+      justify-content: center; /* Butonları ortaya hizala */
+      gap: 20px; /* Butonlar arası boşluk */
+      margin-top: 15px;
     }
 
+    .audio-controls button {
+      padding: 10px 15px; /* Buton iç boşluğu */
+      font-size: 16px; /* Buton yazı boyutu */
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      background-color: #333; /* Buton arka plan rengi */
+      color: white; /* Buton yazı rengi */
+      transition: background-color 0.3s;
+    }
+
+    .audio-controls button:hover {
+      background-color: #555;
+    }
+
+    .audio-controls i {
+      margin-right: 5px; /* İkon ile yazı arasına boşluk */
+    }
+
+    /* Mobil cihazlar için varsayılan kontrolleri gizleme (isteğe bağlı ama önerilir) */
+    @media (max-width: 768px) {
+      audio::-webkit-media-controls {
+        display: none !important; /* Chrome, Safari */
+      }
+      audio::-moz-range-track {
+        display: none !important; /* Firefox */
+      }
+      audio::-moz-range-thumb {
+        display: none !important; /* Firefox */
+      }
+      audio {
+        /* Özel kontroller için biraz daha alan bırakabiliriz */
+        margin-top: 5px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -124,7 +152,12 @@
       <h2>🎧 Şarkı Seç</h2>
       <div id="musicList" class="music-list"></div>
       <div id="nowPlaying" class="now-playing">⏸ Şarkı seçilmedi</div>
-      <audio id="audioPlayer" controls></audio> </div>
+      <audio id="audioPlayer" controls></audio>
+      <div class="audio-controls">
+        <button id="rewindButton"><i class="fas fa-backward"></i> Geri</button>
+        <button id="forwardButton"><i class="fas fa-forward"></i> İleri</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -144,13 +177,12 @@
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
 
-  // Sayfa yüklenince otomatik olarak şifre kutusuna odaklan
   window.onload = () => {
     document.getElementById("passwordInput").focus();
-    loadInitialSettings(); // Başlangıçta ayarları yükle
+    loadInitialSettings();
   };
 
-  let sitePassword = "1903"; // Varsayılan şifre, Firebase'den gelenle değişecek
+  let sitePassword = "1903";
 
   async function loadInitialSettings() {
     const settingsDocRef = doc(db, "settings", "main");
@@ -166,7 +198,7 @@
     if (input === sitePassword) {
       document.querySelector(".password-screen").classList.remove("active");
       document.querySelector(".music-screen").classList.add("active");
-      loadMusic(); // Şifre doğruysa müziği yükle
+      loadMusic();
     } else {
       document.getElementById("error").style.display = "block";
     }
@@ -176,8 +208,30 @@
   const player = document.getElementById("audioPlayer");
   const nowPlaying = document.getElementById("nowPlaying");
 
+  // Yeni eklendi: İleri/Geri Sarma Butonları ve İşlevselliği
+  const rewindButton = document.getElementById('rewindButton');
+  const forwardButton = document.getElementById('forwardButton');
+  const seekTime = 10; // Kaç saniye ileri/geri sarılacak
+
+  rewindButton.addEventListener('click', () => {
+    if (player.currentTime > seekTime) {
+      player.currentTime -= seekTime;
+    } else {
+      player.currentTime = 0;
+    }
+  });
+
+  forwardButton.addEventListener('click', () => {
+    if (player.currentTime < player.duration - seekTime) {
+      player.currentTime += seekTime;
+    } else {
+      player.currentTime = player.duration;
+    }
+  });
+  // Yeni ekleme sonu
+
   async function loadMusic() {
-    musicListDiv.innerHTML = ''; // Mevcutları temizle
+    musicListDiv.innerHTML = '';
     const query = await getDocs(collection(db, "music"));
     query.forEach(doc => {
       const data = doc.data();
