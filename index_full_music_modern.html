@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Beşiktaş Müzik</title>
+  <style>
+    * { box-sizing: border-box; }
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: 'Segoe UI', sans-serif;
+      background: black;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .container {
+      text-align: center;
+      padding: 20px;
+    }
+    .password-screen, .music-screen {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+    }
+    .password-screen.active, .music-screen.active {
+      display: flex;
+    }
+    input[type="password"] {
+      font-size: 20px;
+      padding: 12px;
+      border-radius: 8px;
+      border: none;
+      text-align: center;
+      width: 160px;
+    }
+    button {
+      margin-top: 16px;
+      padding: 12px 24px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      background: #0f0;
+      color: black;
+      font-weight: bold;
+    }
+    .music-player {
+      max-width: 400px;
+      width: 100%;
+      background: rgba(255,255,255,0.05);
+      padding: 20px;
+      border-radius: 16px;
+      box-shadow: 0 0 10px rgba(255,255,255,0.2);
+    }
+    .music-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin: 20px 0;
+    }
+    .music-button {
+      background: #111;
+      border: 1px solid #444;
+      padding: 12px;
+      border-radius: 8px;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    .music-button:hover {
+      background: #222;
+    }
+    .music-button.active {
+      background: #0f0;
+      color: black;
+      font-weight: bold;
+    }
+    .now-playing {
+      margin: 20px 0;
+      font-size: 16px;
+      color: #0f0;
+    }
+    audio {
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="password-screen active">
+    <h2>Şifreyi Girin</h2>
+    <input type="password" id="passwordInput" maxlength="4" placeholder="****" />
+    <button onclick="checkPassword()">Giriş Yap</button>
+    <p id="error" style="color:red; display:none; margin-top:10px;">Yanlış şifre!</p>
+  </div>
+
+  <div class="music-screen">
+    <div class="music-player">
+      <h2>🎧 Şarkı Seç</h2>
+      <div id="musicList" class="music-list"></div>
+      <div id="nowPlaying" class="now-playing">⏸ Şarkı seçilmedi</div>
+      <audio id="audioPlayer" controls></audio>
+    </div>
+  </div>
+</div>
+
+<script>
+const correctPassword = "1903";
+function checkPassword() {
+  const input = document.getElementById("passwordInput").value;
+  if (input === correctPassword) {
+    document.querySelector(".password-screen").classList.remove("active");
+    document.querySelector(".music-screen").classList.add("active");
+  } else {
+    document.getElementById("error").style.display = "block";
+  }
+}
+
+const musicData = [
+  ["https://files.catbox.moe/xw1l38.mp3", "Beşiktaş - Marş 1"],
+  ["https://files.catbox.moe/hsbrf1.mp3", "Beşiktaş - Marş 2"]
+];
+
+const musicListDiv = document.getElementById("musicList");
+const player = document.getElementById("audioPlayer");
+const nowPlaying = document.getElementById("nowPlaying");
+
+musicData.forEach(([url, name]) => {
+  const btn = document.createElement("button");
+  btn.className = "music-button";
+  btn.innerText = name;
+  btn.onclick = () => {
+    document.querySelectorAll(".music-button").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    player.src = url;
+    player.play();
+    nowPlaying.textContent = "🎶 Çalıyor: " + name;
+  };
+  musicListDiv.appendChild(btn);
+});
+</script>
+</body>
+</html>
