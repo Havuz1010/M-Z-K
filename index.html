@@ -120,7 +120,7 @@
       margin-right: 5px; /* İkon ile yazı arasına boşluk */
     }
 
-    /* Mobil cihazlar için varsayılan kontrolleri gizleme (isteğe bağlı ama önerilir) */
+    /* Mobil cihazlar için varsayılan kontrolleri gizleme (önerilir) */
     @media (max-width: 768px) {
       audio::-webkit-media-controls {
         display: none !important; /* Chrome, Safari */
@@ -166,7 +166,7 @@
   import { getFirestore, doc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
 
   const firebaseConfig = {
-    apiKey: "AIzaSyD-sWB0nG4eAW2BndW8AvG6OVZFP_LjpQk", // API anahtarınızı buraya yapıştırın
+    apiKey: "AIzaSyD-sWB0nG4eAW2BndW8AvG6OVZFP_LjpQk", // API anahtarınız burada
     authDomain: "admin-5ae49.firebaseapp.com",
     projectId: "admin-5ae49",
     storageBucket: "admin-5ae49.firebasestorage.app",
@@ -198,7 +198,7 @@
     if (input === sitePassword) {
       document.querySelector(".password-screen").classList.remove("active");
       document.querySelector(".music-screen").classList.add("active");
-      loadMusic();
+      loadMusic(); // Şifre doğruysa müziği yükle
     } else {
       document.getElementById("error").style.display = "block";
     }
@@ -231,7 +231,7 @@
   // Yeni ekleme sonu
 
   async function loadMusic() {
-    musicListDiv.innerHTML = '';
+    musicListDiv.innerHTML = ''; // Mevcutları temizle
     const query = await getDocs(collection(db, "music"));
     query.forEach(doc => {
       const data = doc.data();
