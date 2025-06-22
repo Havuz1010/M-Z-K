@@ -87,7 +87,27 @@
     }
     audio {
       width: 100%;
+      margin-top: 15px; /* Butonlardan sonra biraz boşluk bırakır */
+      border-radius: 8px;
+      background-color: #222;
+      padding: 5px;
     }
+
+    /* Tarayıcıya özel stiller (opsiyonel) */
+    audio::-webkit-media-controls-panel {
+      background-color: #333;
+      color: white;
+    }
+    audio::-webkit-media-controls-play-button,
+    audio::-webkit-media-controls-pause-button,
+    audio::-webkit-media-controls-current-time-display,
+    audio::-webkit-media-controls-time-remaining-display,
+    audio::-webkit-media-controls-timeline,
+    audio::-webkit-media-controls-volume-slider,
+    audio::-webkit-media-controls-mute-button {
+      color: white;
+    }
+
   </style>
 </head>
 <body>
@@ -104,8 +124,7 @@
       <h2>🎧 Şarkı Seç</h2>
       <div id="musicList" class="music-list"></div>
       <div id="nowPlaying" class="now-playing">⏸ Şarkı seçilmedi</div>
-      <audio id="audioPlayer" controls></audio>
-    </div>
+      <audio id="audioPlayer" controls></audio> </div>
   </div>
 </div>
 
@@ -114,7 +133,7 @@
   import { getFirestore, doc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
 
   const firebaseConfig = {
-    apiKey: "AIzaSyD-sWB0nG4eAW2BndW8AvG6OVZFP_LjpQk",
+    apiKey: "AIzaSyD-sWB0nG4eAW2BndW8AvG6OVZFP_LjpQk", // API anahtarınızı buraya yapıştırın
     authDomain: "admin-5ae49.firebaseapp.com",
     projectId: "admin-5ae49",
     storageBucket: "admin-5ae49.firebasestorage.app",
